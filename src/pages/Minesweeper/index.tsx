@@ -1,6 +1,6 @@
-import { Box, Container, Grid, Paper, Typography } from '@mui/material'
+import { Box, Button, Container, Grid, Paper, Typography } from '@mui/material'
 import React, { useEffect, useState } from 'react'
-import { Board, Cell } from './types'
+import { Board, Cell, GameStatus } from './types'
 
 const ROWS = 8
 const COLS = 8
@@ -9,10 +9,13 @@ const MINES = 10
 const Minesweeper = () => {
   const [board, setBoard] = useState<Board>([])
   const [firstClick, setFirstClick] = useState<boolean>(false)
+  const [mineCount, setMineCount] = useState<number>(MINES)
+  const [gameStatus, setGameStatus] = useState('')
 
   useEffect(() => {
     setBoard(initializeBoard())
     setFirstClick(true)
+    setGameStatus('PLAYING')
   }, [])
 
   const initializeBoard = (): Board => {
@@ -63,11 +66,33 @@ const Minesweeper = () => {
     setBoard(newBoard)
   }
 
+  const handleRightClick = (e: React.MouseEvent<HTMLDivElement>, row: number, col: number) => {
+    e.preventDefault() // Prevent opening right click menu
+
+    const newBoard = board.map((row) => row.map((cell) => ({ ...cell })))
+    const cell = newBoard[row][col]
+
+    if (!cell.isRevealed) {
+      cell.isFlagged = !cell.isFlagged
+      const updatedMineCount = cell.isFlagged ? mineCount - 1 : mineCount + 1
+      setMineCount(updatedMineCount)
+    }
+
+    setBoard(newBoard)
+  }
+
   const getCellContent = (cell: Cell): string => {
-    if(cell.isFlagged) return '🚩'
-    if(cell.isMine) return '💣'
-    if(!cell.isRevealed) return ''
+    if (cell.isFlagged) return '🚩'
+    if (cell.isMine) return '💣'
+    if (!cell.isRevealed) return ''
     return cell.neighborCount.toString()
+  }
+
+  const handleRestartGame = () => {
+    setBoard(initializeBoard())
+    setFirstClick(true)
+    setMineCount(MINES)
+    setGameStatus('PLAYING')
   }
 
   return (
@@ -78,10 +103,10 @@ const Minesweeper = () => {
 
       <Grid container spacing={2} justifyContent="center" alignItems="center" sx={{ mb: 2 }}>
         <Grid size={4} textAlign="center">
-          <Typography variant="h6">Mine count</Typography>
+          <Typography variant="h6">{mineCount}</Typography>
         </Grid>
         <Grid size={4} textAlign="center">
-          <Typography variant="h6">Game status</Typography>
+          <Typography variant="h6">{gameStatus}</Typography>
         </Grid>
         <Grid size={4} textAlign="center">
           <Typography variant="h6">Timer</Typography>
@@ -104,13 +129,24 @@ const Minesweeper = () => {
                 fontWeight: 'bold',
                 userSelect: 'none',
                 cursor: 'pointer',
+                bgcolor: cell.isMine && cell.isRevealed ? 'red' : cell.isRevealed ? 'grey.200' : '#fff',
+                '&:hover': {
+                  bgcolor: cell.isMine && cell.isRevealed ? 'red' : cell.isRevealed ? 'grey.200' : 'grey.300',
+                },
               }}
               onClick={() => handleCellClick(rowIndex, colIndex)}
+              onContextMenu={(e) => handleRightClick(e, rowIndex, colIndex)}
             >
               {getCellContent(cell)}
             </Paper>
           ))
         )}
+      </Box>
+
+      <Box textAlign="center" mt={3}>
+        <Button variant="contained" onClick={handleRestartGame}>
+          Restart
+        </Button>
       </Box>
     </Container>
   )
