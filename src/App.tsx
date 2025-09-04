@@ -1,9 +1,10 @@
 import React from 'react';
+import Minesweeper from './pages/Minesweeper';
 
 function App() {
   return (
     <div className="App">
-      <h1>Minesweeper</h1>
+      <Minesweeper/>
     </div>
   );
 }
