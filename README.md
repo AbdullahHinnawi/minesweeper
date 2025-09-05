@@ -1,6 +1,6 @@
 <h1 align="left">Minesweeper</h1>
 
-### ✨ [Running version on Vercel]()
+### ✨ [Running version on Vercel](https://minesweeper-ashy-six.vercel.app/)
 
 
 ## Frontend technologies:
