@@ -1,6 +1,7 @@
 import { Box, Button, Container, Grid, Paper, Typography } from '@mui/material'
 import React, { useEffect, useState } from 'react'
 import { Board, Cell, GameStatus } from './types'
+import { formatTime } from '../../utils/HelperFunctions'
 
 const ROWS = 8
 const COLS = 8
@@ -11,11 +12,16 @@ const Minesweeper: React.FC = () => {
   const [firstClick, setFirstClick] = useState<boolean>(false)
   const [mineCount, setMineCount] = useState<number>(MINES)
   const [gameStatus, setGameStatus] = useState<GameStatus>('PLAYING')
+  const [timer, setTimer] = useState<number>(0)
+  const [gameStarted, setGameStarted] = useState<boolean>(false)
+
 
   useEffect(() => {
     setBoard(initializeBoard())
     setFirstClick(true)
     setGameStatus('PLAYING')
+    setTimer(0)
+    setGameStarted(false)
   }, [])
 
   useEffect(() => {
@@ -38,6 +44,22 @@ const Minesweeper: React.FC = () => {
       setGameStatus('WON');
     }
   }, [board, firstClick]);
+
+  useEffect(() => {
+    let intervalId: number | undefined
+
+    if (gameStarted && gameStatus === 'PLAYING') {
+      intervalId = window.setInterval(() => {
+        setTimer(prevTimer => prevTimer + 1)
+      }, 1000)
+    }
+
+    return () => {
+      if (intervalId !== undefined) {
+        clearInterval(intervalId)
+      }
+    }
+  }, [gameStarted, gameStatus])
 
   const getNeighborPositions = (row: number, col: number): Array<[number, number]> => {
     const directions = [-1, 0, 1] // Relative positions: up, same, down
@@ -141,6 +163,7 @@ const Minesweeper: React.FC = () => {
       newBoard = placeMinesRandomly(newBoard, row, col)
       newBoard = calculateMineNeighborCounts(newBoard)
       setFirstClick(false)
+      setGameStarted(true)
     }
 
     // If clicked on mine, set game status to lost and reveal all the mines
@@ -194,6 +217,8 @@ const Minesweeper: React.FC = () => {
     setFirstClick(true)
     setMineCount(MINES)
     setGameStatus('PLAYING')
+    setTimer(0)
+    setGameStarted(false)
   }
 
   const getGameStatusEmoji = (gameStatus: GameStatus | undefined): string => {
@@ -209,22 +234,21 @@ const Minesweeper: React.FC = () => {
     }
   }
 
-
   return (
-    <Container maxWidth="sm" sx={{ py: 4 }}>
+    <Container maxWidth="sm" sx={{ py: 2 }}>
       <Typography variant="h1" sx={{ fontSize: '48px', fontWeight: 'bold', textAlign: 'center' }} gutterBottom>
         Minesweeper
       </Typography>
 
       <Grid container spacing={2} justifyContent="center" alignItems="center" sx={{ mb: 2 }}>
         <Grid size={4} textAlign="center">
-          <Typography variant="h6">{mineCount}</Typography>
+          <Typography sx={{fontWeight: 'bold'}} variant="h6">{mineCount} 💣</Typography>
         </Grid>
         <Grid size={4} textAlign="center">
-          <Typography sx={{fontSize: '36px'}}>{getGameStatusEmoji(gameStatus)}</Typography>
+          <Typography sx={{fontSize: '32px'}}>{getGameStatusEmoji(gameStatus)}</Typography>
         </Grid>
         <Grid size={4} textAlign="center">
-          <Typography variant="h6">Timer</Typography>
+          <Typography sx={{fontWeight: 'bold'}} variant="h6">⏱️ {formatTime(timer)}</Typography>
         </Grid>
       </Grid>
 
@@ -256,6 +280,12 @@ const Minesweeper: React.FC = () => {
             </Paper>
           ))
         )}
+      </Box>
+
+      <Box textAlign="center" mt={3}>
+        <Typography> Use left click to reveal the cell </Typography>
+        <Typography> Use right click to flag or unflag the mine </Typography>
+        <Typography> Find all the mines to win </Typography>
       </Box>
 
       <Box textAlign="center" mt={3}>
