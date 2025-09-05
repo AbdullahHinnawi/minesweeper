@@ -10,13 +10,34 @@ const Minesweeper: React.FC = () => {
   const [board, setBoard] = useState<Board>([])
   const [firstClick, setFirstClick] = useState<boolean>(false)
   const [mineCount, setMineCount] = useState<number>(MINES)
-  const [gameStatus, setGameStatus] = useState('')
+  const [gameStatus, setGameStatus] = useState<GameStatus>('PLAYING')
 
   useEffect(() => {
     setBoard(initializeBoard())
     setFirstClick(true)
     setGameStatus('PLAYING')
   }, [])
+
+  useEffect(() => {
+    if (board.length === 0 || firstClick) return;
+
+    let revealedCount = 0;
+    let correctFlags = 0;
+
+    for (let row = 0; row < ROWS; row++) {
+      for (let col = 0; col < COLS; col++) {
+
+        const cell = board[row][col];
+
+        if (cell.isFlagged && cell.isMine) correctFlags++;
+        if (cell.isRevealed && !cell.isMine) revealedCount++;
+      }
+    }
+
+    if (revealedCount === ROWS * COLS - MINES) {
+      setGameStatus('WON');
+    }
+  }, [board, firstClick]);
 
   const getNeighborPositions = (row: number, col: number): Array<[number, number]> => {
     const directions = [-1, 0, 1] // Relative positions: up, same, down
@@ -162,8 +183,9 @@ const Minesweeper: React.FC = () => {
 
   const getCellContent = (cell: Cell): string => {
     if (cell.isFlagged) return '🚩'
+    if (!cell.isRevealed) return ''
     if (cell.isMine) return '💣'
-    if (!cell.isRevealed || cell.neighborCount === 0) return ''
+    if(cell.neighborCount === 0) return ''
     return cell.neighborCount.toString()
   }
 
@@ -173,6 +195,20 @@ const Minesweeper: React.FC = () => {
     setMineCount(MINES)
     setGameStatus('PLAYING')
   }
+
+  const getGameStatusEmoji = (gameStatus: GameStatus | undefined): string => {
+    switch (gameStatus) {
+      case 'WON':
+        return '😎';
+      case 'LOST':
+        return '😔'
+      case 'PLAYING':
+        return '😀'
+      default:
+        return '😀'
+    }
+  }
+
 
   return (
     <Container maxWidth="sm" sx={{ py: 4 }}>
@@ -185,7 +221,7 @@ const Minesweeper: React.FC = () => {
           <Typography variant="h6">{mineCount}</Typography>
         </Grid>
         <Grid size={4} textAlign="center">
-          <Typography variant="h6">{gameStatus}</Typography>
+          <Typography sx={{fontSize: '36px'}}>{getGameStatusEmoji(gameStatus)}</Typography>
         </Grid>
         <Grid size={4} textAlign="center">
           <Typography variant="h6">Timer</Typography>
